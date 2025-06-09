@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from langchain_community.document_loaders import WebBaseLoader, TextLoader
+from langchain_community.document_loaders import WebBaseLoader, TextLoader, PyMuPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
@@ -11,11 +11,16 @@ from tenacity import retry, stop_after_attempt, wait_fixed
 # Load environment variables
 load_dotenv()
 google_api_key = os.getenv("api_key")
+os.environ["GOOGLE_API_KEY"] = google_api_key  # important for the underlying SDK
+
+print("🔑 Loaded API key:", (google_api_key[:10] + "...") if google_api_key else "None")
 
 # Step 1: Load Document or URL
 def load_data(source: str):
     if source.startswith("http"):
         return WebBaseLoader(source).load()
+    elif source.lower().endswith(".pdf"):
+        return PyMuPDFLoader(source).load()
     else:
         return TextLoader(source, encoding="utf-8").load()
 
@@ -31,13 +36,27 @@ def embed_with_retry(chroma, texts, metadatas):
 
 # Step 3: Create Vector Store
 def create_vector_store(chunks, embeddings, batch_size=10):
-    all_texts = [doc.page_content for doc in chunks]
-    all_metadatas = [doc.metadata for doc in chunks]
+    all_texts = [doc.page_content.strip() for doc in chunks if doc.page_content.strip()]
+    all_metadatas = [doc.metadata for doc in chunks if doc.page_content.strip()]
+
+    # Filter texts that are too short or too long
+    filtered_texts = []
+    filtered_metadatas = []
+    for t, m in zip(all_texts, all_metadatas):
+        if 10 < len(t) < 2000:
+            filtered_texts.append(t)
+            filtered_metadatas.append(m)
+
     chroma = Chroma(persist_directory="chroma_store", embedding_function=embeddings)
 
-    for i in range(0, len(all_texts), batch_size):
-        batch_texts = all_texts[i:i + batch_size]
-        batch_metadatas = all_metadatas[i:i + batch_size]
+    for i in range(0, len(filtered_texts), batch_size):
+        batch_texts = filtered_texts[i:i + batch_size]
+        batch_metadatas = filtered_metadatas[i:i + batch_size]
+
+        print(f"🔄 Embedding batch {i // batch_size} with {len(batch_texts)} texts...")
+        for j, t in enumerate(batch_texts):
+            print(f"  ➤ Chunk {j+1} preview: {t[:100]}...")
+
         try:
             embed_with_retry(chroma, batch_texts, batch_metadatas)
         except Exception as e:
@@ -81,7 +100,11 @@ def main(source_path_or_url, query):
     chunks = chunk_data(docs)
 
     print("🔐 Setting up embeddings...")
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=google_api_key)
+    # Updated embedding model name — change if your API docs specify another
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="embedding-gecko@001",  
+        google_api_key=google_api_key
+    )
 
     print("🧠 Creating vectorstore...")
     vectorstore = create_vector_store(chunks, embeddings)
@@ -95,6 +118,6 @@ def main(source_path_or_url, query):
 
 # Example usage
 if __name__ == "__main__":
-    url = "Current Technological Trends and Fu.txt"
-    query = "What are the main goals of artificial intelligence?"
+    url = "jcc2025131_41733021.pdf"  # Change to your PDF/TXT/URL
+    query = "Summarize the entire document"
     main(url, query)
