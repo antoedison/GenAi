@@ -33,7 +33,7 @@ def get_student(student_id: int = Path(..., description= "The Id of the student 
     return students[student_id]
 
 
-@app.get("/get-by-nam/{student_id}")
+@app.get("/get-by-name/{student_id}")
 def get_student_by_name(*, student_id = int, name: Optional[str] = None):
     for student_id in students:
         if students[student_id]["name"] == name:
