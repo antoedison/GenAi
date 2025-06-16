@@ -2,6 +2,6 @@ Langchain/lang_venv/
 RAG/venv/
 python_3.10
 Prompt Engineering/prompt_venv
-Fast_Api/venv
-Fast_Api/__pycache__
-Fast_Api/TaskManager/__pycache__
+Fast_Api/__pycache__/
+Fast_Api/venv/
+Fast_Api/TaskManager/__pycache__/
