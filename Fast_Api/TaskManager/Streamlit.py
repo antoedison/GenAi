@@ -56,7 +56,6 @@ if st.session_state.clicked == "Add":
                 st.success("✅ Task added successfully.")
             else:
                 st.error(f"❌ Failed to add task. Status: {res.status_code}")
-
 # View / Update / Delete Tasks
 if st.session_state.clicked in ["View", "Update", "Delete"]:
     df = fetch_tasks()

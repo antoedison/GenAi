@@ -16,7 +16,7 @@ def calculate(mark, credit):
         point = credit * 10
     elif 80 <= mark < 90:
         point = credit * 9
-    elif 70 <= mark < 80:
+    elif 70 <= mark < 74:
         point = credit * 8
     elif 60 <= mark < 70:
         point = credit * 7

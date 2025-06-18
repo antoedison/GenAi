@@ -23,10 +23,12 @@ def load_data(source: str):
         return PyMuPDFLoader(source).load()
     else:
         return TextLoader(source, encoding="utf-8").load()
+    
+
 
 # Step 2: Chunk the Document
 def chunk_data(documents):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=300, chunk_overlap=50)
+    splitter = RecursiveCharacterTextSplitter(chunk_size=200, chunk_overlap=50)
     return splitter.split_documents(documents)
 
 # Retry logic to handle timeout errors in embedding

@@ -1,7 +1,9 @@
 langchain==0.1.16
-langchain-core==0.1.42
+langchain-core==0.1.47
 langchain-community==0.0.35
 langchain-google-genai==0.0.8
 google-generativeai==0.3.2
 tenacity>=8.2.3
 python-dotenv
+PyPDF2
+faiss-cpu
