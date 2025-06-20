@@ -77,7 +77,7 @@ def create_qa_chain(vectorstore):
     llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.2, convert_system_message_to_human=True)
     return RetrievalQA.from_chain_type(
         llm=llm,
-        retriever=vectorstore.as_retriever(),
+        retriever=vectorstore.as_retriever(search_kwargs = {"k": 10}),
         return_source_documents=True
     )
 
