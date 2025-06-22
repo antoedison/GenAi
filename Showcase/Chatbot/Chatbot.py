@@ -57,7 +57,8 @@ def initialize_chatbot():
         return None
 
 def main():
-    st.set_page_config(page_title="Friendly Chatbot", layout="centered",page_icon="..\Images\Project_logo.png")
+    st.set_page_config(page_title="Friendly Chatbot", layout="centered",page_icon="https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Images/Project_logo.png
+")
 
     col1, col2 = st.columns([4, 1])
     with col1:
@@ -102,7 +103,8 @@ def main():
                     language=language
                 )
                 # Show bot response and store it with avatar
-                st.chat_message("assistant", avatar="Images/Chatbot_logo.png").markdown(response)
+                st.chat_message("assistant", avatar="https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Chatbot/Images/Chatbot_logo.png
+").markdown(response)
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": response,
