@@ -57,8 +57,7 @@ def initialize_chatbot():
         return None
 
 def main():
-    st.set_page_config(page_title="Friendly Chatbot", layout="centered",page_icon="https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Images/Project_logo.png
-")
+    st.set_page_config(page_title="Friendly Chatbot", layout="centered",page_icon="https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Images/Project_logo.png")
 
     col1, col2 = st.columns([4, 1])
     with col1:
