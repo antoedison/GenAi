@@ -102,8 +102,7 @@ def main():
                     language=language
                 )
                 # Show bot response and store it with avatar
-                st.chat_message("assistant", avatar="https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Chatbot/Images/Chatbot_logo.png
-").markdown(response)
+                st.chat_message("assistant", avatar="https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Chatbot/Images/Chatbot_logo.png").markdown(response)
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": response,
