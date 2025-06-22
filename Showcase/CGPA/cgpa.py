@@ -3,12 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Cgpa Calculator", layout="centered",page_icon="D:\Virtusa_Internship\Showcase\Images\Project_logo.png")
 st.title("Cgpa Calculator")
 
-# Session state initialization
-if 'cgpa' not in st.session_state:
-    st.session_state.cgpa = 0
 
-if 'form_type' not in st.session_state:
-    st.session_state.form_type = None
 
 # Grade point calculation
 def calculate(mark, credit):
@@ -28,6 +23,12 @@ def calculate(mark, credit):
 
 # Main logic
 def main():
+    # Session state initialization
+    if 'cgpa' not in st.session_state:
+        st.session_state.cgpa = 0
+
+    if 'form_type' not in st.session_state:
+        st.session_state.form_type = None
     st.write("Welcome to CGPA Calculator")
 
     col1, col2 = st.columns(2)
