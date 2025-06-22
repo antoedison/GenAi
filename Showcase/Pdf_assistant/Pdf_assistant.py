@@ -11,7 +11,7 @@ from langchain.schema import Document  # ✅ Missing import fixed
 os.environ["GOOGLE_API_KEY"] = "AIzaSyAUU1Yh_VRUcGzsM6XDDy_a-_vsCIlcQ90"
 
 # Set page config
-st.set_page_config(page_title="PDF Assistant", layout="centered",page_icon="D:\Virtusa_Internship\Showcase\Images\Project_logo.png")
+st.set_page_config(page_title="PDF Assistant", layout="centered",page_icon="..\Images\Project_logo.png")
 
 # Sidebar
 with st.sidebar:

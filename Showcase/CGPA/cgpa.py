@@ -1,6 +1,6 @@
 import streamlit as st
 
-st.set_page_config(page_title="Cgpa Calculator", layout="centered",page_icon="D:\Virtusa_Internship\Showcase\Images\Project_logo.png")
+st.set_page_config(page_title="Cgpa Calculator", layout="centered",page_icon="..\Images\Project_logo.png")
 st.title("Cgpa Calculator")
 
 
