@@ -3,6 +3,9 @@ import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
+st.set_page_config(page_title="My Projects", layout= "centered")
+
+
 
 st.sidebar.title("Project Navigator")
 selected_app = st.sidebar.radio("Choose a Service:", [
