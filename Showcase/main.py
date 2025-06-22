@@ -3,8 +3,7 @@ import streamlit as st
 from dotenv import load_dotenv
 
 load_dotenv()
-st.set_page_config(page_title="My Projects", layout= "centered", page_icon = "https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Images/Project_logo.png
-")
+st.set_page_config(page_title="My Projects", layout= "centered", page_icon = "https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Images/Project_logo.png")
 
 
 
