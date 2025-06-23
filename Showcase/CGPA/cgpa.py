@@ -50,7 +50,7 @@ def main():
             gpa = st.number_input(f"GPA for Semester {i}", min_value=0.0, max_value=10.0, step=0.01)
             total += gpa
 
-        if no_of_semesters > 0:
+        if st.button("Calculate"):
             st.success(f"Your CGPA is: {total / no_of_semesters:.2f}")
 
     elif st.session_state.form_type == "gpa":
@@ -66,7 +66,7 @@ def main():
             total_points += calculate(mark, credit)
             total_credits += credit
 
-        if total_credits > 0:
+        if st.button("Calculate"):
             gpa = total_points / total_credits
             st.success(f"Your GPA is: {gpa:.2f}")
 
