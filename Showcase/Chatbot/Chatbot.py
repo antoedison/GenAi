@@ -106,14 +106,14 @@ def main():
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": response,
-                    "avatar": "Images/Chatbot_logo.png"
+                    "avatar": "https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Chatbot/Images/Chatbot_logo.png"
                 })
             except Exception as e:
                 st.error(f"An error occurred: {e}")
                 st.session_state.messages.append({
                     "role": "assistant",
                     "content": "Oops! Something went wrong. Please try again.",
-                    "avatar": "Images/Chatbot_logo.png"
+                    "avatar": "https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Chatbot/Images/Chatbot_logo.png"
                 })
 
 if __name__ == "__main__":
