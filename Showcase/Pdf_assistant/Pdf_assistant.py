@@ -1,4 +1,5 @@
 import os
+import hashlib
 from PyPDF2 import PdfReader
 import streamlit as st
 from langchain.text_splitter import CharacterTextSplitter
@@ -43,7 +44,7 @@ def split_text(text):
     return splitter.create_documents([text])
 
 # Create FAISS vectorstore with batching and filtering
-def build_vectorstore(chunks, batch_size=10):
+def build_vectorstore(chunks,save_path, batch_size=10):
     all_texts = [doc.page_content.strip() for doc in chunks if doc.page_content.strip()]
     all_metadatas = [doc.metadata for doc in chunks if doc.page_content.strip()]
 
@@ -70,7 +71,9 @@ def build_vectorstore(chunks, batch_size=10):
         embedded_documents.extend(batch_documents)
 
     vectorstore = FAISS.from_documents(embedded_documents, embeddings)
+    vectorstore.save_local(save_path)
     return vectorstore
+
 
 # Create RetrievalQA chain
 def create_qa_chain(vectorstore):
@@ -86,17 +89,26 @@ def main():
     st.header("🧠 PDF Question Answering App")
     uploaded_files = st.file_uploader("Upload one or more PDFs", type="pdf", accept_multiple_files=True)
 
+    save_path = "Index_faiss"
+
     if uploaded_files:
-        with st.spinner("📄 Reading PDFs..."):
-            full_text = ""
-            for file in uploaded_files:
-                full_text += load_pdf(file)
+        all_chunks = []
 
-        with st.spinner("✂️ Splitting text into chunks..."):
-            docs = split_text(full_text)
-
+        for file in uploaded_files:
+            text = load_pdf(file)
+            with st.spinner("Reading PDFs"):
+                pdf_hash = hashlib.sha256(text.encode('utf-8')).hexdigest()
+                st.write(pdf_hash)
+            
+            with st.spinner("Splitting text into chunks"):
+                chunks = split_text(text)
+                
+                for chunk in chunks:
+                    chunk.metadata["file_name"] = file.name
+                    chunk.metadata["pdf_hash"] = pdf_hash
+                all_chunks.extend(chunks)
         with st.spinner("🔍 Creating vectorstore..."):
-            vectorstore = build_vectorstore(docs)
+            vectorstore = build_vectorstore(all_chunks,save_path= save_path)
 
         with st.spinner("🧠 Setting up QA chain..."):
             qa = create_qa_chain(vectorstore)
