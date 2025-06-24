@@ -44,7 +44,7 @@ def split_text(text):
     return splitter.create_documents([text])
 
 # Create FAISS vectorstore with batching and filtering
-def build_vectorstore(chunks,save_path, batch_size=10):
+def build_vectorstore(chunks,save_path, existing_vectostore = None, batch_size=10):
     all_texts = [doc.page_content.strip() for doc in chunks if doc.page_content.strip()]
     all_metadatas = [doc.metadata for doc in chunks if doc.page_content.strip()]
 
@@ -71,8 +71,13 @@ def build_vectorstore(chunks,save_path, batch_size=10):
         embedded_documents.extend(batch_documents)
 
     vectorstore = FAISS.from_documents(embedded_documents, embeddings)
-    vectorstore.save_local(save_path)
-    return vectorstore
+    if existing_vectostore:
+        existing_vectostore.merge_from(vectorstore)
+        existing_vectostore.save_local(save_path)
+        return existing_vectostore
+    else:
+        vectorstore.save_local(save_path)
+        return vectorstore
 
 
 # Create RetrievalQA chain
@@ -90,6 +95,16 @@ def main():
     uploaded_files = st.file_uploader("Upload one or more PDFs", type="pdf", accept_multiple_files=True)
 
     save_path = "Index_faiss"
+    try:
+        existing_vectorstore = FAISS.load_local(
+            save_path,
+            embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
+            allow_dangerous_deserialization=True
+        )
+        st.success("Success")
+    except Exception as e:
+        existing_vectorstore = None
+        st.warning(f"⚠️ Failed to load existing FAISS index: {e}")
 
     if uploaded_files:
         all_chunks = []
@@ -108,7 +123,7 @@ def main():
                     chunk.metadata["pdf_hash"] = pdf_hash
                 all_chunks.extend(chunks)
         with st.spinner("🔍 Creating vectorstore..."):
-            vectorstore = build_vectorstore(all_chunks,save_path= save_path)
+            vectorstore = build_vectorstore(all_chunks,save_path, existing_vectorstore)
 
         with st.spinner("🧠 Setting up QA chain..."):
             qa = create_qa_chain(vectorstore)
