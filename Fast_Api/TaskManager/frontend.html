@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Todo Task Manager</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    body {
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .btn-group {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 30px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      background: #007bff;
+      color: white;
+      font-size: 16px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    form {
+      max-width: 500px;
+      margin: 0 auto 30px;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    form input[type="text"],
+    form input[type="checkbox"] {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+    }
+    th, td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: center;
+    }
+    .hidden {
+      display: none;
+    }
+    .status {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>📝 Todo Task Manager</h1>
+  <div class="btn-group">
+    <button onclick="setMode('Add')">➕ Add Task</button>
+    <button onclick="setMode('View')">📄 View Tasks</button>
+    <button onclick="setMode('Update')">✏️ Update Task</button>
+    <button onclick="setMode('Delete')">❌ Delete Task</button>
+  </div>
+
+  <div class="status" id="statusMessage"></div>
+
+  <!-- Add / Update Form -->
+  <form id="taskForm" class="hidden">
+    <input type="text" id="title" placeholder="Title" required />
+    <input type="text" id="description" placeholder="Description" required />
+    <label><input type="checkbox" id="completed" /> Completed</label>
+    <button type="submit" id="submitButton">Submit</button>
+  </form>
+
+  <!-- Task Table -->
+  <div id="taskTable" class="hidden">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Completed</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+
+    <!-- Task Selector for Update/Delete -->
+    <div id="selectTaskSection" class="hidden">
+      <label for="taskSelect">Select Task ID:</label>
+      <select id="taskSelect"></select>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "http://127.0.0.1:8000";
+    let mode = null;
+    let tasks = [];
+
+    function setMode(newMode) {
+      mode = newMode;
+      document.getElementById("taskForm").classList.add("hidden");
+      document.getElementById("taskTable").classList.add("hidden");
+      document.getElementById("selectTaskSection").classList.add("hidden");
+      document.getElementById("statusMessage").innerText = "";
+
+      if (mode === "Add") {
+        document.getElementById("submitButton").innerText = "Create Task";
+        document.getElementById("taskForm").classList.remove("hidden");
+      } else {
+        loadTasks();
+      }
+    }
+
+    async function loadTasks() {
+      const res = await fetch(`${API_URL}/todo/view`);
+      tasks = await res.json();
+
+      const tableBody = document.getElementById("tableBody");
+      tableBody.innerHTML = "";
+      const taskSelect = document.getElementById("taskSelect");
+      taskSelect.innerHTML = "";
+
+      tasks.forEach(task => {
+        const row = `<tr>
+            <td>${task.id}</td>
+            <td>${task.title}</td>
+            <td>${task.description}</td>
+            <td>${task.completed ? "✅" : "❌"}</td>
+        </tr>`;
+        tableBody.innerHTML += row;
+
+        const option = document.createElement("option");
+        option.value = task.id;
+        option.text = `ID ${task.id} - ${task.title}`;
+        taskSelect.appendChild(option);
+      });
+
+      document.getElementById("taskTable").classList.remove("hidden");
+
+      if (mode === "Update" || mode === "Delete") {
+        document.getElementById("selectTaskSection").classList.remove("hidden");
+        if (mode === "Update") {
+          document.getElementById("taskForm").classList.remove("hidden");
+          fillForm(taskSelect.value);
+        }
+      }
+    }
+
+    function fillForm(taskId) {
+      const task = tasks.find(t => t.id == taskId);
+      if (task) {
+        document.getElementById("title").value = task.title;
+        document.getElementById("description").value = task.description;
+        document.getElementById("completed").checked = task.completed;
+      }
+    }
+
+    document.getElementById("taskSelect").addEventListener("change", () => {
+      if (mode === "Update") fillForm(document.getElementById("taskSelect").value);
+    });
+
+    document.getElementById("taskForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const title = document.getElementById("title").value;
+      const description = document.getElementById("description").value;
+      const completed = document.getElementById("completed").checked;
+
+      if (!title || !description) {
+        setStatus("❗ Please fill in all fields", "red");
+        return;
+      }
+
+      if (mode === "Add") {
+        const res = await fetch(`${API_URL}/todo/create`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, description, completed })
+        });
+        if (res.ok) {
+          setStatus("✅ Task added successfully", "green");
+        } else {
+          setStatus("❌ Failed to add task", "red");
+        }
+      } else if (mode === "Update") {
+        const id = document.getElementById("taskSelect").value;
+        const res = await fetch(`${API_URL}/todo/update/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ title, description, completed })
+        });
+        if (res.ok) {
+          setStatus("✅ Task updated successfully", "green");
+        } else {
+          setStatus("❌ Failed to update task", "red");
+        }
+      }
+
+      loadTasks();
+    });
+
+    document.getElementById("taskSelect").addEventListener("change", () => {
+      if (mode === "Update") {
+        fillForm(document.getElementById("taskSelect").value);
+      }
+    });
+
+    document.getElementById("selectTaskSection").addEventListener("click", async (e) => {
+      if (mode === "Delete" && e.target.tagName === "SELECT") return;
+      if (mode === "Delete") {
+        const id = document.getElementById("taskSelect").value;
+        const confirmed = confirm(`Are you sure you want to delete task ID ${id}?`);
+        if (confirmed) {
+          const res = await fetch(`${API_URL}/todo/delete/${id}`, { method: "DELETE" });
+          if (res.ok) {
+            setStatus("🗑️ Task deleted successfully", "green");
+            loadTasks();
+          } else {
+            setStatus("❌ Failed to delete task", "red");
+          }
+        }
+      }
+    });
+
+    function setStatus(msg, color) {
+      const status = document.getElementById("statusMessage");
+      status.innerText = msg;
+      status.style.color = color;
+    }
+  </script>
+
+</body>
+</html>
