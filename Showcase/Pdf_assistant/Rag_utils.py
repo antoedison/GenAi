@@ -1,4 +1,4 @@
-import PyPDF2 as PdfReader
+from PyPDF2 import PdfReader
 from langchain.text_splitter import CharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.docstore.document import Document

@@ -121,7 +121,7 @@
   <main>
     <h2>🧠 PDF Question Answering App</h2>
 
-    <form id="uploadForm" enctype="multipart/form-data">
+    <form id="uploadForm" action="/Upload_files" enctype="multipart/form-data">
       <label for="file">Upload a PDF</label>
       <input type="file" id="file" name="file" accept=".pdf" required />
       <button type="submit">Upload PDF</button>
@@ -145,20 +145,34 @@
     </footer>
   </main>
 
-  <script>
-    const form = document.getElementById("uploadForm");
-    const statusDiv = document.getElementById("uploadStatus");
+<script>
+  const form = document.getElementById("uploadForm");
+  const fileInput = document.getElementById("file");
+  const statusDiv = document.getElementById("uploadStatus");
 
-    form.addEventListener("submit", async (e) => {
-      e.preventDefault();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-      const formData = new FormData(form);
-      statusDiv.innerHTML = "⏳ Uploading...";
+    const file = fileInput.files[0];
+    if (!file) {
+      statusDiv.innerHTML = "⚠️ Please select a file to upload.";
+      return;
+    }
+
+    statusDiv.innerHTML = "⏳ Uploading...";
+
+    const reader = new FileReader();
+    reader.onload = async function () {
+      const fileBytes = reader.result;
 
       try {
         const response = await fetch("http://127.0.0.1:8000/Upload_files", {
           method: "POST",
-          body: formData
+          headers: {
+            "Content-Type": "application/pdf",
+            "X-Filename": encodeURIComponent(file.name)  // Optional: pass filename
+          },
+          body: fileBytes
         });
 
         const result = await response.json();
@@ -171,8 +185,12 @@
       } catch (err) {
         statusDiv.innerHTML = `⚠️ <strong>Upload failed:</strong> ${err}`;
       }
-    });
-  </script>
+    };
+
+    reader.readAsArrayBuffer(file);  // Reads file as raw bytes (not base64)
+  });
+</script>
+
 
 </body>
 </html>
