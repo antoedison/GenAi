@@ -5,7 +5,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.docstore.document import Document
 import os
 from dotenv import load_dotenv
-from Pdf_assistant import load_pdf, split_text, build_vectorstore
+from Rag_utils import load_pdf, split_text, build_vectorstore
 
 load_dotenv()
 
@@ -41,27 +41,31 @@ def get_chunks():
 
 @app.post("/Upload_files")
 async def upload_pdf(file: UploadFile = File(...)):
+    try:
 
-    contents = await file.read()
-    temp_path = f"temp_{file.filename}"
-    with open(temp_path, "wb") as f:
-        f.write(contents)
-    
-    
-    text = load_pdf(temp_path)
-    chunks = split_text(text)
-    new_db = build_vectorstore(chunks, faiss_index_path, db)
-    """
-    if os.path.exists(faiss_index_path):
-        db.merge_from(new_db)
-    else:
-        db = new_db
-    """
-    
-    db.save_local(faiss_index_path)
-    os.remove(temp_path)
+        contents = await file.read()
+        temp_path = f"temp_{file.filename}"
+        with open(temp_path, "wb") as f:
+            f.write(contents)
+        
+        
+        text = load_pdf(temp_path)
+        chunks = split_text(text)
+        new_db = build_vectorstore(chunks, faiss_index_path, db)
+        """
+        if os.path.exists(faiss_index_path):
+            db.merge_from(new_db)
+        else:
+            db = new_db
+        """
+        
+        db.save_local(faiss_index_path)
+        os.remove(temp_path)
 
-    return {"message": "File processed and chunks embedded", "chunks_added": len(chunks)}
+        return {"message": "File processed and chunks embedded", "chunks_added": len(chunks)}
+
+    except Exception as e:
+        raise HTTPException(status_code=500,detail=str(e))
 
 
 

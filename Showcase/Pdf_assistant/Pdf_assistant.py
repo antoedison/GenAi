@@ -44,7 +44,7 @@ def split_text(text):
     return splitter.create_documents([text])
 
 # Create FAISS vectorstore with batching and filtering
-def build_vectorstore(chunks,save_path, existing_vectostore = None, batch_size=10):
+def build_vectorstore(chunks, save_path, existing_vectostore=None, batch_size=10):
     all_texts = [doc.page_content.strip() for doc in chunks if doc.page_content.strip()]
     all_metadatas = [doc.metadata for doc in chunks if doc.page_content.strip()]
 
@@ -56,7 +56,11 @@ def build_vectorstore(chunks,save_path, existing_vectostore = None, batch_size=1
             filtered_texts.append(t)
             filtered_metadatas.append(m)
 
+    if not filtered_texts:
+        raise ValueError("No valid text chunks found for embedding.")
+
     embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
+
     embedded_documents = []
 
     for i in range(0, len(filtered_texts), batch_size):
@@ -67,9 +71,12 @@ def build_vectorstore(chunks,save_path, existing_vectostore = None, batch_size=1
         for j, t in enumerate(batch_texts):
             print(f"   ➤ Chunk {j + 1} preview: {t[:100]}...")
 
-        batch_documents = [Document(page_content=t, metadata=m) for t, m in zip(batch_texts, batch_metadatas)]
-        embedded_documents.extend(batch_documents)
+        embedded_documents.extend([
+            Document(page_content=text, metadata=meta)
+            for text, meta in zip(batch_texts, batch_metadatas)
+        ])
 
+    # ✅ Embedding will be done internally here
     vectorstore = FAISS.from_documents(embedded_documents, embeddings)
     if existing_vectostore:
         existing_vectostore.merge_from(vectorstore)
@@ -101,10 +108,8 @@ def main():
             embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001"),
             allow_dangerous_deserialization=True
         )
-        st.success("Success")
     except Exception as e:
         existing_vectorstore = None
-        st.warning(f"⚠️ Failed to load existing FAISS index: {e}")
 
     if uploaded_files:
         all_chunks = []
