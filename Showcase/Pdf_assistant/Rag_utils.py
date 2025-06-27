@@ -3,6 +3,8 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.docstore.document import Document
 from langchain_community.vectorstores import FAISS
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain.chains import RetrievalQA
 
 # Function to load PDF
 def load_pdf(file):
@@ -13,12 +15,17 @@ def load_pdf(file):
     return text
 
 # Split text into chunks
-def split_text(text):
+def split_text(text,x_filename):
     splitter = CharacterTextSplitter(
         separator="\n",
         chunk_size=300,
         chunk_overlap=50
     )
+
+    all_chunks = splitter.create_documents([text])
+    for chunk in all_chunks:
+        chunk.metadata["pdf_name"] = x_filename
+        chunk.metadata["Pdf_hash"] = pdf_hash
     return splitter.create_documents([text])
 
 
@@ -64,3 +71,12 @@ def build_vectorstore(chunks, save_path, existing_vectostore=None, batch_size=10
     else:
         vectorstore.save_local(save_path)
         return vectorstore
+
+# Create RetrievalQA chain
+def create_qa_chain(vectorstore):
+    llm = ChatGoogleGenerativeAI(model="gemini-2.0-flash", temperature=0.2, convert_system_message_to_human=True)
+    return RetrievalQA.from_chain_type(
+        llm=llm,
+        retriever=vectorstore.as_retriever(search_kwargs = {"k": 10}),
+        return_source_documents=True
+    )

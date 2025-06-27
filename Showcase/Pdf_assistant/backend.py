@@ -1,13 +1,15 @@
 from fastapi import FastAPI, Request, HTTPException, Header
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.docstore.document import Document
 from typing import List
 import os
 from dotenv import load_dotenv
-from Rag_utils import load_pdf, split_text, build_vectorstore
+from Rag_utils import load_pdf, split_text, build_vectorstore, create_qa_chain
 from fastapi.middleware.cors import CORSMiddleware
+from markdown import markdown
+from urllib.parse import unquote
 
 load_dotenv()
 
@@ -32,12 +34,15 @@ faiss_index_path = "Index_faiss"
 embedding = GoogleGenerativeAIEmbeddings(model='models/embedding-001')
 
 # Load existing FAISS index if present
+qa = None
 db = None
 if os.path.exists(faiss_index_path):
     db = FAISS.load_local(faiss_index_path, embedding, allow_dangerous_deserialization=True)
+    qa = create_qa_chain(db)
+
 
 # GET method to list all chunks
-@app.get("/")
+@app.get("/answers")
 def get_chunks():
     try:
         all_docs: List[Document] = db.similarity_search("", k=1000)
@@ -73,23 +78,44 @@ async def upload_raw_pdf(request: Request):
 """
 
 @app.post("/Upload_files")
-async def upload_file(request: Request, x_filename: str = Header(None)):
+async def upload_file(request: Request, encoded_filename: str = Header(None)):
     file_bytes = await request.body()
+
+    x_filename = unquote(encoded_filename)
 
     # Save the file (optional)
     with open(x_filename, "wb") as f:
         f.write(file_bytes)
 
     # Do something with the file bytes (e.g. parse PDF)
-
+    
     text = load_pdf(x_filename)
 
     all_chunks = split_text(text)
 
     vectorstore = build_vectorstore(all_chunks,faiss_index_path,db)
+    global qa
+    qa = create_qa_chain(vectorstore)
+
+    
+
+    os.remove(x_filename)
 
 
     return JSONResponse(content={
         "message": f"File '{x_filename}' received successfully!",
         "chunks_added": len(all_chunks)  # Example
     })
+
+
+@app.get("/answer")
+async def get_answers(query: str):
+    if qa is None:
+        raise HTTPException(status_code=400, detail="No qa chain available. Please upload a PDF first")
+    
+    try:
+        raw_result = qa.invoke(query)
+        result = markdown(raw_result["result"])
+        return HTMLResponse(content=result)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
