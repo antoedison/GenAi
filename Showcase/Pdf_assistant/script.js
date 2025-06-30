@@ -1,4 +1,3 @@
-
 const uploadForm = document.getElementById("uploadForm");
 const fileInput = document.getElementById("file");
 const uploadStatus = document.getElementById("uploadStatus");
@@ -21,7 +20,7 @@ uploadForm.addEventListener("submit", async (e) => {
         method: "POST",
         headers: {
           "Content-Type": "application/pdf",
-          "encoded-filename": encodeURIComponent(file.name)
+          "encoded-filename": encodeURIComponent(file.name)  // ✅ CHANGED here
         },
         body: reader.result
       });
@@ -44,29 +43,36 @@ uploadForm.addEventListener("submit", async (e) => {
 const queryForm = document.getElementById("queryForm");
 const questionInput = document.getElementById("question");
 const answerOutput = document.getElementById("answerOutput");
+const submissionStatus = document.getElementById("submissionStatus");
 
 queryForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const question = questionInput.value.trim();
   if (!question) {
-    answerOutput.innerHTML = "⚠️ Please enter a question.";
+    submissionStatus.innerHTML = "⚠️ Please enter a question.";
     return;
   }
 
-  answerOutput.innerHTML = "⏳ Getting answer...";
+  submissionStatus.innerHTML = "⏳ Sending question...";
+  answerOutput.innerHTML = "";
 
   try {
-    const response = await fetch(`http://127.0.0.1:8000/answer?query=${encodeURIComponent(question)}`);
+    const response = await fetch(`http://127.0.0.1:8000/answer?query=${encodeURIComponent(question)}`, {
+      method: "GET", // ✅ GET method — no body allowed
+    });
 
-    const answer = await response.text();
+    const answer = await response.text(); // ✅ Server returns HTML content
 
     if (response.ok) {
+      submissionStatus.innerHTML = "✅ Successfully submitted";
       answerOutput.innerHTML = `💡 <strong>Answer:</strong> ${answer}`;
     } else {
-      answerOutput.innerHTML = `❌ Error: ${answer}`;
+      submissionStatus.innerHTML = "❌ Server error.";
+      answerOutput.innerHTML = `❌ ${answer}`;
     }
   } catch (err) {
-    answerOutput.innerHTML = `❌ Request failed: ${err.message}`;
+    submissionStatus.innerHTML = "❌ Network error.";
+    answerOutput.innerHTML = `❌ ${err.message}`;
   }
 });

@@ -5,6 +5,7 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain.docstore.document import Document
 from typing import List
 import os
+import hashlib
 from dotenv import load_dotenv
 from Rag_utils import load_pdf, split_text, build_vectorstore, create_qa_chain
 from fastapi.middleware.cors import CORSMiddleware
@@ -80,32 +81,41 @@ async def upload_raw_pdf(request: Request):
 @app.post("/Upload_files")
 async def upload_file(request: Request, encoded_filename: str = Header(None)):
     file_bytes = await request.body()
+    global db
 
+    if not encoded_filename:
+        raise HTTPException(status_code=400, detail="Missing 'x_filename' header")
+    
     x_filename = unquote(encoded_filename)
 
-    # Save the file (optional)
+    # Save the uploaded file
     with open(x_filename, "wb") as f:
         f.write(file_bytes)
 
-    # Do something with the file bytes (e.g. parse PDF)
-    
-    text = load_pdf(x_filename)
+    try:
+        # Extract and process text
+        text = load_pdf(x_filename)
+        hash_pdf = hashlib.sha256(text.encode('utf-8')).hexdigest()
+        all_chunks = split_text(text, x_filename, hash_pdf)
 
-    all_chunks = split_text(text)
+        # Rebuild vectorstore
+        vectorstore = build_vectorstore(all_chunks, faiss_index_path, db)
+        vectorstore.save_local(faiss_index_path)
 
-    vectorstore = build_vectorstore(all_chunks,faiss_index_path,db)
-    global qa
-    qa = create_qa_chain(vectorstore)
+        # Update global state
+        global qa
+        db = vectorstore
+        qa = create_qa_chain(vectorstore)
 
-    
+        return JSONResponse(content={
+            "message": f"File '{x_filename}' received successfully!",
+            "chunks_added": len(all_chunks)
+        })
 
-    os.remove(x_filename)
-
-
-    return JSONResponse(content={
-        "message": f"File '{x_filename}' received successfully!",
-        "chunks_added": len(all_chunks)  # Example
-    })
+    finally:
+        # Always clean up file even if there's an error
+        if os.path.exists(x_filename):
+            os.remove(x_filename)
 
 
 @app.get("/answer")

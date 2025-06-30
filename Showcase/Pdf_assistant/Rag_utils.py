@@ -15,7 +15,7 @@ def load_pdf(file):
     return text
 
 # Split text into chunks
-def split_text(text,x_filename):
+def split_text(text,x_filename,pdf_hash):
     splitter = CharacterTextSplitter(
         separator="\n",
         chunk_size=300,

@@ -6,104 +6,7 @@
   <title>PDF Assistant</title>
   <link rel="icon" href="https://raw.githubusercontent.com/antoedison/GenAi/main/Showcase/Images/Project_logo.png" />
 
-  <style>
-    * {
-      box-sizing: border-box;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    body {
-      display: flex;
-      margin: 0;
-      height: 100vh;
-      overflow: hidden;
-    }
-
-    aside {
-      background-color: #f5f5f5;
-      width: 280px;
-      padding: 2rem 1.5rem;
-      border-right: 1px solid #ddd;
-    }
-
-    aside h1 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-    }
-
-    aside p {
-      margin: 0.5rem 0;
-      font-size: 0.9rem;
-      color: #333;
-    }
-
-    main {
-      flex: 1;
-      padding: 2rem;
-      background-color: #ffffff;
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem;
-      overflow-y: auto;
-    }
-
-    main h2 {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 600;
-    }
-
-    input[type="file"],
-    input[type="text"],
-    button {
-      width: 100%;
-      padding: 0.75rem;
-      font-size: 1rem;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      margin-bottom: 1rem;
-    }
-
-    input[type="file"] {
-      background-color: #fafafa;
-    }
-
-    button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-      transition: background-color 0.2s ease;
-    }
-
-    button:hover {
-      background-color: #0056b3;
-    }
-
-    .expander {
-      margin-top: 1.5rem;
-      padding: 1rem;
-      background: #f9f9f9;
-      border-left: 4px solid #007bff;
-    }
-
-    footer {
-      margin-top: auto;
-      font-size: 0.8rem;
-      color: #888;
-      text-align: center;
-      padding: 1rem;
-    }
-
-    #uploadStatus {
-      font-weight: 600;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
@@ -129,11 +32,15 @@
 
     <div id="uploadStatus"></div>
 
-    <form id="queryForm" action="/ask_question" method="post">
+    <form id="queryForm">
       <label for="question">💬 Ask a question about the PDFs</label>
       <input type="text" id="question" name="question" placeholder="Type your question..." required />
       <button type="submit">Ask Question</button>
     </form>
+
+    <!-- Output areas -->
+    <div id="submissionStatus"></div>
+    <div id="answerOutput"></div>
 
     <section class="expander">
       <h3>📚 Source Documents</h3>
@@ -145,51 +52,7 @@
     </footer>
   </main>
 
-<script>
-  const form = document.getElementById("uploadForm");
-  const fileInput = document.getElementById("file");
-  const statusDiv = document.getElementById("uploadStatus");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const file = fileInput.files[0];
-    if (!file) {
-      statusDiv.innerHTML = "⚠️ Please select a file to upload.";
-      return;
-    }
-
-    statusDiv.innerHTML = "⏳ Uploading...";
-
-    const reader = new FileReader();
-    reader.onload = async function () {
-      const fileBytes = reader.result;
-
-      try {
-        const response = await fetch("http://127.0.0.1:8000/Upload_files", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/pdf",
-            "X-Filename": encodeURIComponent(file.name)  // Optional: pass filename
-          },
-          body: fileBytes
-        });
-
-        const result = await response.json();
-
-        if (response.ok) {
-          statusDiv.innerHTML = `✅ <strong>${result.message}</strong><br>📌 Chunks Added: ${result.chunks_added}`;
-        } else {
-          statusDiv.innerHTML = `❌ <strong>Error:</strong> ${result.detail}`;
-        }
-      } catch (err) {
-        statusDiv.innerHTML = `⚠️ <strong>Upload failed:</strong> ${err}`;
-      }
-    };
-
-    reader.readAsArrayBuffer(file);  // Reads file as raw bytes (not base64)
-  });
-</script>
+<script src="script.js"></script>
 
 
 </body>
