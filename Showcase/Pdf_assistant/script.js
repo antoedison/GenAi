@@ -20,7 +20,7 @@ uploadForm.addEventListener("submit", async (e) => {
         method: "POST",
         headers: {
           "Content-Type": "application/pdf",
-          "encoded-filename": encodeURIComponent(file.name)  // ✅ CHANGED here
+          "encoded-filename": encodeURIComponent(file.name)  
         },
         body: reader.result
       });
